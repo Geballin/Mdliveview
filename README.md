@@ -10,7 +10,7 @@ Mdliveview is as lightweigth Markdown file viewer with autoreload (liveview) fun
 -  Tcl/Tk      (8.6 or better )
 -  Tcllib      (1.19 or better )
 -  [Gifblock](https://github.com/Geballin/Gifblock)
--  Tkhtml      (Needed to view html documentation)
+-  Tkhtml
 
 ## Installing
 
