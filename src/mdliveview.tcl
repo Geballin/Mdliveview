@@ -28,7 +28,7 @@ proc main {} {
     global VERSION
     set reloading {1}
     pack [ttk::frame .frame] -fill both -expand 1
-    grid [html .frame.html -imagecmd {load_image} -yscrollcommand ".frame.scroll set"] -row 0 -column 0 -sticky nsew
+    grid [html .frame.html -imagecmd "load_image [file dirname $mdfilename]" -yscrollcommand ".frame.scroll set"] -row 0 -column 0 -sticky nsew
     grid [ttk::scrollbar .frame.scroll -command ".frame.html yview" -orient vertical] -row 0 -column 1 -sticky ns
     grid [ttk::checkbutton .frame.toggleReloading -text {Automatic reloading} -command "toggleReloading $mdfilename" -variable reloading] -columnspan 2
     grid rowconfigure .frame 0 -weight 1
@@ -80,7 +80,8 @@ proc usage {} {
     puts "\t$APP_NAME MARKDOWN_FILE"
 }
 
-proc load_image {imagename} {
+proc load_image {path_arg imagename_arg} {
+    set imagename [file join $path_arg $imagename_arg]
     if {[file extension $imagename] == ".gif"} {
 	update_gif $imagename
     } else {
