@@ -1,4 +1,6 @@
 Makefile* linguist-vendored
+*.ac linguist-vendored
 *.m4 linguist-vendored
 *.md linguist-vendored
 configure linguist-vendored
+install-sh linguist-vendored
