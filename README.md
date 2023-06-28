@@ -22,7 +22,7 @@ Mdliveview can be installed using the classic :
 
 ## Using
 
-   mdliveview [MARKDOWN_FILE_TO_OPEN]
+    mdliveview [MARKDOWN_FILE_TO_OPEN]
 
 
 ## Future Directions
