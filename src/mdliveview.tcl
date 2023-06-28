@@ -8,27 +8,34 @@ package require Tk
 package require Markdown
 package require Tkhtml
 package require fileutil
+package require rest
 package require Img
 package require gifblock
 package require struct::list
+package require http
+package require tls
+
+::http::register https 443 ::tls::socket
 
 namespace import ::tcl::mathop::*
 
 set APP_NAME mdliveview
-set VERSION  1.0
+set VERSION  1.1
 
 proc main {} {
     if {[llength $::argv] != 1} {
 	usage
 	exit 0
     }
-    set mdfilename [lindex $::argv 0]
+    set mdfilename [file normalize [lindex $::argv 0]]
+    
     global reloading
     global APP_NAME
     global VERSION
     set reloading {1}
+    cd [file dirname $mdfilename]
     pack [ttk::frame .frame] -fill both -expand 1
-    grid [html .frame.html -imagecmd "load_image [file dirname $mdfilename]" -yscrollcommand ".frame.scroll set"] -row 0 -column 0 -sticky nsew
+    grid [html .frame.html -imagecmd {load_image} -yscrollcommand ".frame.scroll set"] -row 0 -column 0 -sticky nsew
     grid [ttk::scrollbar .frame.scroll -command ".frame.html yview" -orient vertical] -row 0 -column 1 -sticky ns
     grid [ttk::checkbutton .frame.toggleReloading -text {Automatic reloading} -command "toggleReloading $mdfilename" -variable reloading] -columnspan 2
     grid rowconfigure .frame 0 -weight 1
@@ -75,28 +82,53 @@ proc usage {} {
     global APP_NAME
     global VERSION
     puts "$APP_NAME $VERSION"
-    puts "By Géballin 2019"
+    puts "By Géballin 2019-2023"
     puts "Usage :"
     puts "\t$APP_NAME MARKDOWN_FILE"
 }
 
-proc load_image {path_arg imagename_arg} {
-    set imagename [file join $path_arg $imagename_arg]
+proc load_image {imagename} {
     if {[file extension $imagename] == ".gif"} {
 	update_gif $imagename
     } else {
-	image create photo -file $imagename
+	if {[string range $imagename 0 3] == {http}} {
+	    # Load image datas
+	    try {
+		set res [rest::get $imagename {}]
+	    } on error {errorMessage} {
+		tk_messageBox -title "Error on get ressource" -message "Unable to get ressource $imagename :\n$errorMessage" -icon error
+		return
+	    }
+	    image create photo $imagename -data $res
+	} else {
+	    image create photo -file $imagename
+	}
     }
 }
 
 proc update_gif {imagename {frame_nbr 0} {frames_delays ""}} {
+    set imagefilename $imagename
+    if {[string range $imagename 0 3] == {http}} {
+	set imagefilename [file join "/tmp/mdlcache" "[regsub -all {[^[:alnum:]]} $imagename {}].gif"]
+	if {![file exists $imagefilename]} {
+	    # Load image datas
+	    file mkdir "/tmp/mdlcache"
+	    try {
+		set res [rest::get $imagename {}]
+	    } on error {errorMessage} {
+		tk_messageBox -title "Error on get ressource" -message "Unable to get ressource $imagename :\n$errorMessage" -icon error
+		return
+	    }	
+	    fileutil::writeFile -encoding binary $imagefilename $res
+	}
+    }
     if {$frames_delays == ""} {
-	set frames_delays [get_gif_delays $imagename]
+	set frames_delays [get_gif_delays $imagefilename]
     }
     if {$frame_nbr >= [llength $frames_delays]} {
 	set frame_nbr 0
     }
-    image create photo $imagename -file $imagename -format "gif -index $frame_nbr"
+    image create photo $imagename -file $imagefilename -format "gif -index $frame_nbr"
     if {[llength $frames_delays] > 1} {
 	after [* 10 [lindex $frames_delays $frame_nbr]] "update_gif $imagename [incr frame_nbr] [list $frames_delays]"
     }
