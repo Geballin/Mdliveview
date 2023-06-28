@@ -1,4 +1,4 @@
-AC_INIT(mdliveview, 1.0)
+AC_INIT(mdliveview, 1.1)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/mdliveview.tcl])
 
